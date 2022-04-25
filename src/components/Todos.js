@@ -1,50 +1,75 @@
-import React from 'react'
+import React, { useEffect, useState }  from 'react'
+import { useSelector, useDispatch } from "react-redux"
+import { filteredTodos } from "../redux/todos/todosSlice"
+import {
+  getTodosAsync,
+  toggleTodoAsync,
+  removeTodoAsync,
+  allCompletedTodoAsync
+} from "../redux/todos/todoService"
 
-function Todos({todos, changeTodos, page}) {
+function Todos() {
+  const dispatch = useDispatch()
+  const selectFilteredTodos = useSelector(filteredTodos)
+  const isLoading = useSelector((state) => state.todos.isLoading)
+  const error = useSelector((state) => state.todos.error)
+  const [refresh, setRefresh] = useState (true)
+  
 
-const removeTodos = (id) => {
-   const removedArr=[...todos].filter(todo => todo.id !== id)
-   changeTodos(removedArr)
-}
+  useEffect(() => {
+    dispatch(getTodosAsync());
+  }, [refresh]);
 
-const completeTodo = (id) => {
-    let newArr = todos.map(todo => {
-        if (todo.id === id) {
-          todo.isCompleted = !todo.isCompleted
-        }
-        return todo
-      })
-      changeTodos(newArr)
-}
+  const handleAllCompleted = async (id, completed) => {
+    await dispatch(allCompletedTodoAsync({ id, data: { completed } }));
+    setRefresh(!refresh)
+  }
 
-const allComplete = () => {
-    let completedArr = todos.map (todo => {
-        todo.isCompleted = true
-        return todo
-    })
-    changeTodos(completedArr)
-}
- 
+  const handleToggle = async (id, completed) => {
+    await dispatch(toggleTodoAsync({ id, data: { completed } }));
+    setRefresh(!refresh)
+  }
+
+  const handleDestroy = async (id) => {
+    if (window.confirm("Are you sure ?")) {
+      await dispatch(removeTodoAsync(id));
+      setRefresh(!refresh)
+    }
+  }
+
+  if (isLoading) {
+    return <div style={{ padding: 15, fontSize: 18 }}>Loading...</div>;
+  }
+
+  if (error) {
+    return 
+      <div style={{ padding: 15, fontSize: 16, color: "red" }}>
+       Error: {error}
+      </div>
+    }
+
   return (
     <div className='main'>
-
-        <input className="toggle-all" type="checkbox"/>
-		<label for="toggle-all" onClick={allComplete}>
+        <input className="toggle-all" type="checkbox" />
+		<label htmlFor="toggle-all" onClick={() => handleAllCompleted("all", true)}> 
 			Mark all as complete
 		</label>
 
         <ul className='todo-list'>
-           {page.map((todo,index) => (
-               <li className={todo.isCompleted ? "completed" : ""} key={index}>
+           {selectFilteredTodos.map((todo,index) => (
+               <li
+               className={todo.completed ? "completed" : ""} key={index}>
                   <div className='view' >
-                    <input className="toggle" type="checkbox"/>
-					<label id={todo.id} onClick={() => completeTodo(todo.id)}>{todo.text}</label>	
+                    <input className="toggle" 
+                    type="checkbox"
+                    checked={todo.completed}
+                    onChange={() => handleToggle(todo.id, !todo.completed)}/>
+					            <label id={todo.id}>{todo.title}</label>	
                   </div>
-                  <button className="destroy" onClick={() => removeTodos(todo.id)}></button>
+                  <button className="destroy" onClick={() => handleDestroy(todo.id)}></button>
                </li>
             ))}
         </ul>
-
     </div>
   )
 }

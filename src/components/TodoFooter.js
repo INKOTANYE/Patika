@@ -1,39 +1,45 @@
-import React from 'react'
+import React, {useEffect} from 'react'
+import {useDispatch, useSelector} from "react-redux"
+import {changeActiveFilter} from "../redux/todos/todosSlice"
+import { removeAllTodosAsync } from "../redux/todos/todoService"
 
-function TodoFooter({todos, changeTodos, select, changeSelect}) {   
+function TodoFooter() {  
+	const items = useSelector((state) => state.todos.items)
+	const itemsLeft = items.filter(item => !item.completed).length
 
-const clearCompleted = () => {
-    let clearedArr = [...todos].filter(todo => todo.isCompleted !== true)
-    changeTodos(clearedArr)
-}    
+	const dispatch = useDispatch()
+	const activeFilter = useSelector(state => state.todos.activeFilter)
+
+	useEffect(()=>{
+		localStorage.setItem("activeFilter", activeFilter)
+	},[activeFilter])
+
 
   return (
     <div className='footer'>
         <span className="todo-count">
-			<strong>{todos.length} </strong>
-			items left
+			<strong>{itemsLeft} </strong>
+			item{itemsLeft > 1 && "s"} left
 		</span>
 
         <ul className="filters">
 			<li>
-				<a className={select==="All" && "selected"} onClick={()=>changeSelect("All")}>All</a>
+				<a className={activeFilter==="All" ? "selected" :""} onClick={()=>dispatch(changeActiveFilter("All"))}>All</a>
 			</li>
 			<li>
-				<a className={select==="Active" && "selected"} onClick={()=>changeSelect("Active")}>Active</a>
+				<a className={activeFilter==="Active" ? "selected" :""} onClick={()=>dispatch(changeActiveFilter("Active"))}>Active</a>
 			</li>
 			<li>
-				<a className={select==="Completed" && "selected"} onClick={()=>changeSelect("Completed")}>Completed</a>
+				<a className={activeFilter==="Completed" ? "selected" :""} onClick={()=>dispatch(changeActiveFilter("Completed"))}>Completed</a>
 			</li>
 		</ul>
 
-        <button className="clear-completed" onClick={clearCompleted}>
+        <button className="clear-completed" onClick={() => {dispatch(removeAllTodosAsync())}} >
 			Clear completed
 		</button>
 
         <footer className="info">
-	       <p>Click to edit a todo</p>
-	       <p>Created by <a href="https://d12n.me/">Dmitry Sharabin</a></p>
-	       <p>Part of <a href="http://todomvc.com">TodoMVC</a></p>
+	       <p>Created by <a href="https://github.com/INKOTANYE/">Zeynep Çöpür</a></p>
         </footer>
 
     </div>
